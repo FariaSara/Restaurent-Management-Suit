@@ -1,19 +1,20 @@
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
-from apps.orders.models import Order, OrderItem
-from apps.inventory.models import MenuItem
+from django.contrib.auth.models import User
+from django.contrib.auth.forms import UserCreationForm
+from django.contrib import messages
+from django.views.generic import CreateView
+from django.urls import reverse_lazy
+from django.contrib.auth import login
+from apps.orders.models import Order
 from apps.tables.models import Table
+from apps.inventory.models import MenuItem
 from django.db.models import Count, Sum, F, Avg
 from django.db.models.functions import ExtractHour
 from django.utils import timezone
 from datetime import timedelta
 from django.http import JsonResponse
 from django.contrib.auth import logout
-from django.shortcuts import redirect
-from django.contrib.auth.forms import UserCreationForm
-from django.views.generic.edit import CreateView
-from django.urls import reverse_lazy
-from django.contrib import messages
 
 class RegisterView(CreateView):
     form_class = UserCreationForm
@@ -270,3 +271,19 @@ def custom_logout(request):
         messages.success(request, 'You have been successfully logged out.')
         return redirect('login')
     return redirect('dashboard:dashboard')
+
+def home_view(request):
+    """
+    Unified landing page for both customers and staff
+    """
+    # Get some basic stats for the dashboard
+    total_orders = Order.objects.count()
+    total_tables = Table.objects.count()
+    total_menu_items = MenuItem.objects.count()
+    
+    context = {
+        'total_orders': total_orders,
+        'total_tables': total_tables,
+        'total_menu_items': total_menu_items,
+    }
+    return render(request, 'dashboard/home.html', context)

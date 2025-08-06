@@ -1,0 +1,147 @@
+{% extends 'customer_interface/base.html' %}
+
+{% block title %}Menu - Restaurant{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<div class="category-header text-center">
+    <h1 class="display-4 mb-3">
+        <i class="fas fa-utensils me-3"></i>
+        Our Delicious Menu
+    </h1>
+    <p class="lead">Explore our carefully crafted dishes organized by categories</p>
+    
+    <!-- Search Bar -->
+    <form method="GET" action="{% url 'customer_interface:search' %}" class="mt-4">
+        <div class="row justify-content-center">
+            <div class="col-md-6">
+                <div class="input-group">
+                    <input type="text" name="q" class="form-control" placeholder="Search for dishes..." 
+                           value="{{ search_query }}" aria-label="Search menu">
+                    <button class="btn btn-light" type="submit">
+                        <i class="fas fa-search"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+<!-- Menu Categories -->
+{% if menu_by_category %}
+    {% for category, items in menu_by_category.items %}
+        <div class="mb-5">
+            <h2 class="mb-4">
+                <i class="fas fa-star me-2"></i>
+                {{ category.name }}
+            </h2>
+            {% if category.description %}
+                <p class="text-muted mb-4">{{ category.description }}</p>
+            {% endif %}
+            
+            <div class="row">
+                {% for item in items %}
+                    <div class="col-lg-4 col-md-6 mb-4">
+                        <div class="card h-100">
+                            {% if item.image %}
+                                <img src="{{ item.image.url }}" class="card-img-top menu-item-image" alt="{{ item.name }}">
+                            {% else %}
+                                <div class="card-img-top menu-item-image bg-light d-flex align-items-center justify-content-center">
+                                    <i class="fas fa-utensils fa-3x text-muted"></i>
+                                </div>
+                            {% endif %}
+                            
+                            <div class="card-body d-flex flex-column">
+                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <h5 class="card-title mb-0">{{ item.name }}</h5>
+                                    <span class="price-tag">${{ item.price }}</span>
+                                </div>
+                                
+                                {% if item.description %}
+                                    <p class="card-text text-muted flex-grow-1">{{ item.description }}</p>
+                                {% endif %}
+                                
+                                <div class="mt-auto">
+                                    <div class="quantity-controls justify-content-center mb-3">
+                                        <button class="quantity-btn" onclick="decreaseQuantity({{ item.id }})">-</button>
+                                        <input type="number" class="quantity-input" id="quantity-{{ item.id }}" 
+                                               value="1" min="1" max="10">
+                                        <button class="quantity-btn" onclick="increaseQuantity({{ item.id }})">+</button>
+                                    </div>
+                                    
+                                    <button class="btn btn-primary w-100" onclick="addToCart({{ item.id }})">
+                                        <i class="fas fa-plus me-2"></i>
+                                        Add to Cart
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    {% endfor %}
+{% else %}
+    <div class="text-center py-5">
+        <i class="fas fa-search fa-3x text-muted mb-3"></i>
+        <h3>No menu items found</h3>
+        <p class="text-muted">Try adjusting your search criteria or browse all categories.</p>
+        <a href="{% url 'customer_interface:menu' %}" class="btn btn-primary">
+            <i class="fas fa-utensils me-2"></i>
+            View All Menu
+        </a>
+    </div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function increaseQuantity(itemId) {
+        const input = document.getElementById(`quantity-${itemId}`);
+        const currentValue = parseInt(input.value);
+        if (currentValue < 10) {
+            input.value = currentValue + 1;
+        }
+    }
+    
+    function decreaseQuantity(itemId) {
+        const input = document.getElementById(`quantity-${itemId}`);
+        const currentValue = parseInt(input.value);
+        if (currentValue > 1) {
+            input.value = currentValue - 1;
+        }
+    }
+    
+    function addToCart(itemId) {
+        const quantity = parseInt(document.getElementById(`quantity-${itemId}`).value);
+        
+        fetch('{% url "customer_interface:add_to_cart" %}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify({
+                menu_item_id: itemId,
+                quantity: quantity
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showToast(data.message, 'success');
+                updateCartCount(data.cart_count);
+                
+                // Reset quantity to 1
+                document.getElementById(`quantity-${itemId}`).value = 1;
+            } else {
+                showToast(data.message, 'danger');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showToast('An error occurred while adding to cart', 'danger');
+        });
+    }
+</script>
+{% endblock %} 

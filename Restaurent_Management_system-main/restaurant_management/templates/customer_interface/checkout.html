@@ -1,0 +1,244 @@
+{% extends 'customer_interface/base.html' %}
+
+{% block title %}Checkout - Restaurant{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header bg-success text-white">
+                <h3 class="mb-0">
+                    <i class="fas fa-credit-card me-2"></i>
+                    Checkout
+                </h3>
+            </div>
+            <div class="card-body">
+                <form method="POST" id="checkout-form">
+                    {% csrf_token %}
+                    
+                    <!-- Customer Information -->
+                    <h5 class="mb-3">
+                        <i class="fas fa-user me-2"></i>
+                        Customer Information
+                    </h5>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="customer_name" class="form-label">Full Name *</label>
+                            <input type="text" class="form-control" id="customer_name" name="customer_name" 
+                                   required placeholder="Enter your full name">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="customer_email" class="form-label">Email Address *</label>
+                            <input type="email" class="form-control" id="customer_email" name="customer_email" 
+                                   required placeholder="Enter your email">
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="customer_phone" class="form-label">Phone Number *</label>
+                            <input type="tel" class="form-control" id="customer_phone" name="customer_phone" 
+                                   required placeholder="Enter your phone number">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="order_type" class="form-label">Order Type *</label>
+                            <select class="form-select" id="order_type" name="order_type" required>
+                                <option value="dine_in">Dine In</option>
+                                <option value="takeaway">Takeaway</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <!-- Table Number (for dine-in) -->
+                    <div class="row mb-3" id="table-number-section">
+                        <div class="col-md-6">
+                            <label for="table_number" class="form-label">Table Number</label>
+                            <input type="number" class="form-control" id="table_number" name="table_number" 
+                                   min="1" placeholder="Enter table number">
+                            <div class="form-text">Please specify your table number for dine-in orders</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Special Instructions -->
+                    <div class="mb-3">
+                        <label for="notes" class="form-label">Special Instructions</label>
+                        <textarea class="form-control" id="notes" name="notes" rows="3" 
+                                  placeholder="Any special requests or dietary requirements?"></textarea>
+                    </div>
+                    
+                    <hr class="my-4">
+                    
+                    <!-- Order Summary -->
+                    <h5 class="mb-3">
+                        <i class="fas fa-receipt me-2"></i>
+                        Order Summary
+                    </h5>
+                    
+                    {% for item in cart_items %}
+                        <div class="row align-items-center mb-2">
+                            <div class="col-md-6">
+                                <h6 class="mb-0">{{ item.menu_item.name }}</h6>
+                                <small class="text-muted">{{ item.menu_item.category.name }}</small>
+                            </div>
+                            <div class="col-md-2 text-center">
+                                <span class="text-muted">x{{ item.quantity }}</span>
+                            </div>
+                            <div class="col-md-4 text-end">
+                                <span class="fw-bold">${{ item.subtotal }}</span>
+                            </div>
+                        </div>
+                    {% endfor %}
+                    
+                    <hr class="my-3">
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6 class="mb-0">Total Items:</h6>
+                        </div>
+                        <div class="col-md-6 text-end">
+                            <h6 class="mb-0">{{ cart.item_count }}</h6>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h5 class="mb-0 text-success">Total Amount:</h5>
+                        </div>
+                        <div class="col-md-6 text-end">
+                            <h5 class="mb-0 text-success">${{ cart.total_amount }}</h5>
+                        </div>
+                    </div>
+                    
+                    <hr class="my-4">
+                    
+                    <!-- Terms and Conditions -->
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" id="terms_conditions" required>
+                        <label class="form-check-label" for="terms_conditions">
+                            I agree to the <a href="#" class="text-decoration-none">Terms and Conditions</a> and 
+                            <a href="#" class="text-decoration-none">Privacy Policy</a>
+                        </label>
+                    </div>
+                    
+                    <!-- Submit Button -->
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-success btn-lg" id="place-order-btn">
+                            <i class="fas fa-check me-2"></i>
+                            Place Order - ${{ cart.total_amount }}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-info-circle me-2"></i>
+                    Order Information
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <h6><i class="fas fa-clock me-2"></i>Estimated Time</h6>
+                    <p class="text-muted mb-0">15-25 minutes for preparation</p>
+                </div>
+                
+                <div class="mb-3">
+                    <h6><i class="fas fa-utensils me-2"></i>Dine In</h6>
+                    <ul class="list-unstyled text-muted small">
+                        <li>• Please specify your table number</li>
+                        <li>• Orders will be served at your table</li>
+                        <li>• Payment at the counter</li>
+                    </ul>
+                </div>
+                
+                <div class="mb-3">
+                    <h6><i class="fas fa-shopping-bag me-2"></i>Takeaway</h6>
+                    <ul class="list-unstyled text-muted small">
+                        <li>• Pick up at the counter</li>
+                        <li>• Payment at pickup</li>
+                        <li>• Please bring your order number</li>
+                    </ul>
+                </div>
+                
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    <strong>Note:</strong> Orders are processed in the order they are received. 
+                    Please be patient during peak hours.
+                </div>
+            </div>
+        </div>
+        
+        <div class="card mt-3">
+            <div class="card-header bg-warning text-dark">
+                <h5 class="mb-0">
+                    <i class="fas fa-phone me-2"></i>
+                    Need Help?
+                </h5>
+            </div>
+            <div class="card-body">
+                <p class="mb-2">If you have any questions or need assistance:</p>
+                <p class="mb-0">
+                    <i class="fas fa-phone me-2"></i>
+                    <strong>Call us:</strong> (555) 123-4567
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Show/hide table number field based on order type
+    document.getElementById('order_type').addEventListener('change', function() {
+        const tableSection = document.getElementById('table-number-section');
+        const tableInput = document.getElementById('table_number');
+        
+        if (this.value === 'dine_in') {
+            tableSection.style.display = 'block';
+            tableInput.required = true;
+        } else {
+            tableSection.style.display = 'none';
+            tableInput.required = false;
+            tableInput.value = '';
+        }
+    });
+    
+    // Form validation
+    document.getElementById('checkout-form').addEventListener('submit', function(e) {
+        const orderType = document.getElementById('order_type').value;
+        const tableNumber = document.getElementById('table_number').value;
+        
+        if (orderType === 'dine_in' && !tableNumber) {
+            e.preventDefault();
+            showToast('Please enter a table number for dine-in orders', 'warning');
+            return false;
+        }
+        
+        // Disable submit button to prevent double submission
+        document.getElementById('place-order-btn').disabled = true;
+        document.getElementById('place-order-btn').innerHTML = 
+            '<i class="fas fa-spinner fa-spin me-2"></i>Processing...';
+    });
+    
+    // Auto-format phone number
+    document.getElementById('customer_phone').addEventListener('input', function(e) {
+        let value = e.target.value.replace(/\D/g, '');
+        if (value.length > 0) {
+            if (value.length <= 3) {
+                value = `(${value}`;
+            } else if (value.length <= 6) {
+                value = `(${value.slice(0, 3)}) ${value.slice(3)}`;
+            } else {
+                value = `(${value.slice(0, 3)}) ${value.slice(3, 6)}-${value.slice(6, 10)}`;
+            }
+        }
+        e.target.value = value;
+    });
+</script>
+{% endblock %} 

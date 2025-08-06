@@ -1,0 +1,160 @@
+{% extends 'customer_interface/base.html' %}
+
+{% block title %}Checkout - Restaurant{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row">
+        <div class="col-lg-8">
+            <h2 class="mb-4">
+                <i class="fas fa-credit-card me-2"></i>Checkout
+            </h2>
+            
+            <form method="post" id="checkoutForm">
+                {% csrf_token %}
+                
+                <!-- Customer Information -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">Customer Information</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="customer_name" class="form-label">Full Name *</label>
+                                <input type="text" class="form-control" id="customer_name" name="customer_name" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="phone_number" class="form-label">Phone Number *</label>
+                                <input type="tel" class="form-control" id="phone_number" name="phone_number" required>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="email" class="form-label">Email Address</label>
+                            <input type="email" class="form-control" id="email" name="email">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Order Type -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">Order Type</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="form-check mb-3">
+                            <input class="form-check-input" type="radio" name="order_type" id="dine_in" value="dine_in" checked>
+                            <label class="form-check-label" for="dine_in">
+                                <i class="fas fa-utensils me-2"></i>Dine In
+                            </label>
+                        </div>
+                        <div class="form-check mb-3">
+                            <input class="form-check-input" type="radio" name="order_type" id="takeaway" value="takeaway">
+                            <label class="form-check-label" for="takeaway">
+                                <i class="fas fa-shopping-bag me-2"></i>Takeaway
+                            </label>
+                        </div>
+                        
+                        <!-- Table Number (for dine-in) -->
+                        <div id="tableSection" class="mb-3">
+                            <label for="table_number" class="form-label">Table Number</label>
+                            <select class="form-select" id="table_number" name="table_number">
+                                <option value="">Select a table</option>
+                                {% for table in available_tables %}
+                                <option value="{{ table.number }}">Table {{ table.number }} ({{ table.capacity }} seats)</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Special Instructions -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">Special Instructions</h5>
+                    </div>
+                    <div class="card-body">
+                        <textarea class="form-control" id="special_instructions" name="special_instructions" rows="3" placeholder="Any special requests or dietary requirements..."></textarea>
+                    </div>
+                </div>
+            </form>
+        </div>
+        
+        <div class="col-lg-4">
+            <!-- Order Summary -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Order Summary</h5>
+                </div>
+                <div class="card-body">
+                    {% for item in cart_items %}
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>{{ item.menu_item.name }} x{{ item.quantity }}</span>
+                        <span>${{ item.subtotal }}</span>
+                    </div>
+                    {% endfor %}
+                    <hr>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Subtotal:</span>
+                        <span>${{ cart.total_amount }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Tax (8%):</span>
+                        <span>${{ cart.tax_amount }}</span>
+                    </div>
+                    <hr>
+                    <div class="d-flex justify-content-between mb-3">
+                        <strong>Total:</strong>
+                        <strong class="text-success">${{ cart.grand_total }}</strong>
+                    </div>
+                    
+                    <button type="submit" form="checkoutForm" class="btn btn-success w-100">
+                        <i class="fas fa-check me-2"></i>Place Order
+                    </button>
+                    
+                    <a href="{% url 'customer_interface:cart' %}" class="btn btn-outline-secondary w-100 mt-2">
+                        <i class="fas fa-arrow-left me-2"></i>Back to Cart
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const dineInRadio = document.getElementById('dine_in');
+    const takeawayRadio = document.getElementById('takeaway');
+    const tableSection = document.getElementById('tableSection');
+    const tableSelect = document.getElementById('table_number');
+    
+    function toggleTableSection() {
+        if (dineInRadio.checked) {
+            tableSection.style.display = 'block';
+            tableSelect.required = true;
+        } else {
+            tableSection.style.display = 'none';
+            tableSelect.required = false;
+        }
+    }
+    
+    dineInRadio.addEventListener('change', toggleTableSection);
+    takeawayRadio.addEventListener('change', toggleTableSection);
+    
+    // Initial state
+    toggleTableSection();
+});
+
+// Form validation
+document.getElementById('checkoutForm').addEventListener('submit', function(e) {
+    const dineIn = document.getElementById('dine_in').checked;
+    const tableNumber = document.getElementById('table_number').value;
+    
+    if (dineIn && !tableNumber) {
+        e.preventDefault();
+        showToast('Please select a table for dine-in orders', 'warning');
+        return false;
+    }
+});
+</script>
+{% endblock %} 

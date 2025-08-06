@@ -1,0 +1,302 @@
+{% extends 'customer_interface/base.html' %}
+
+{% block title %}Order Tracking - {{ order.order_number }}{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h3 class="mb-0">
+                    <i class="fas fa-truck me-2"></i>
+                    Order Tracking
+                </h3>
+            </div>
+            <div class="card-body">
+                <!-- Order Information -->
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <h5><i class="fas fa-receipt me-2"></i>Order Details</h5>
+                        <p class="mb-1"><strong>Order Number:</strong> <span class="badge bg-secondary">{{ order.order_number }}</span></p>
+                        <p class="mb-1"><strong>Customer:</strong> {{ order.customer_name }}</p>
+                        <p class="mb-1"><strong>Order Type:</strong> 
+                            <span class="badge {% if order.order_type == 'dine_in' %}bg-success{% else %}bg-info{% endif %}">
+                                {{ order.get_order_type_display }}
+                            </span>
+                        </p>
+                        {% if order.table_number %}
+                            <p class="mb-1"><strong>Table:</strong> {{ order.table_number }}</p>
+                        {% endif %}
+                        <p class="mb-1"><strong>Order Date:</strong> {{ order.created_at|date:"F j, Y g:i A" }}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <h5><i class="fas fa-phone me-2"></i>Contact Information</h5>
+                        <p class="mb-1"><strong>Email:</strong> {{ order.customer_email }}</p>
+                        <p class="mb-1"><strong>Phone:</strong> {{ order.customer_phone }}</p>
+                        {% if order.notes %}
+                            <p class="mb-1"><strong>Special Instructions:</strong></p>
+                            <p class="text-muted small">{{ order.notes }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <hr>
+                
+                <!-- Order Status Progress -->
+                <div class="mb-4">
+                    <h5><i class="fas fa-chart-line me-2"></i>Order Progress</h5>
+                    
+                    <div class="progress mb-3" style="height: 25px;">
+                        <div class="progress-bar progress-bar-custom" role="progressbar" 
+                             style="width: {{ status_progress }}%" 
+                             aria-valuenow="{{ status_progress }}" aria-valuemin="0" aria-valuemax="100">
+                            {{ status_progress }}%
+                        </div>
+                    </div>
+                    
+                    <div class="row text-center">
+                        <div class="col">
+                            <div class="status-step {% if order.status == 'pending' or order.status == 'confirmed' or order.status == 'preparing' or order.status == 'ready' or order.status == 'completed' %}active{% endif %}">
+                                <i class="fas fa-clock fa-2x mb-2"></i>
+                                <p class="mb-0">Pending</p>
+                            </div>
+                        </div>
+                        <div class="col">
+                            <div class="status-step {% if order.status == 'confirmed' or order.status == 'preparing' or order.status == 'ready' or order.status == 'completed' %}active{% endif %}">
+                                <i class="fas fa-check-circle fa-2x mb-2"></i>
+                                <p class="mb-0">Confirmed</p>
+                            </div>
+                        </div>
+                        <div class="col">
+                            <div class="status-step {% if order.status == 'preparing' or order.status == 'ready' or order.status == 'completed' %}active{% endif %}">
+                                <i class="fas fa-utensils fa-2x mb-2"></i>
+                                <p class="mb-0">Preparing</p>
+                            </div>
+                        </div>
+                        <div class="col">
+                            <div class="status-step {% if order.status == 'ready' or order.status == 'completed' %}active{% endif %}">
+                                <i class="fas fa-bell fa-2x mb-2"></i>
+                                <p class="mb-0">Ready</p>
+                            </div>
+                        </div>
+                        <div class="col">
+                            <div class="status-step {% if order.status == 'completed' %}active{% endif %}">
+                                <i class="fas fa-star fa-2x mb-2"></i>
+                                <p class="mb-0">Completed</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="text-center mt-3">
+                        <h6 class="text-primary">Current Status: <span id="current-status">{{ order.get_status_display }}</span></h6>
+                        <p class="text-muted small">Last updated: <span id="last-updated">{{ order.updated_at|date:"g:i A" }}</span></p>
+                    </div>
+                </div>
+                
+                <hr>
+                
+                <!-- Order Items -->
+                <div class="mb-4">
+                    <h5><i class="fas fa-list me-2"></i>Order Items</h5>
+                    {% for item in order_items %}
+                        <div class="row align-items-center mb-2 p-2 border rounded">
+                            <div class="col-md-6">
+                                <h6 class="mb-0">{{ item.menu_item.name }}</h6>
+                                <small class="text-muted">{{ item.menu_item.category.name }}</small>
+                            </div>
+                            <div class="col-md-2 text-center">
+                                <span class="text-muted">x{{ item.quantity }}</span>
+                            </div>
+                            <div class="col-md-2 text-center">
+                                <span class="text-muted">${{ item.price_at_time }}</span>
+                            </div>
+                            <div class="col-md-2 text-end">
+                                <span class="fw-bold">${{ item.subtotal }}</span>
+                            </div>
+                        </div>
+                    {% endfor %}
+                    
+                    <hr>
+                    
+                    <div class="row">
+                        <div class="col-md-8">
+                            <h6 class="mb-0">Total Amount:</h6>
+                        </div>
+                        <div class="col-md-4 text-end">
+                            <h5 class="mb-0 text-success">${{ order.total_amount }}</h5>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-info-circle me-2"></i>
+                    Order Information
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <h6><i class="fas fa-clock me-2"></i>Estimated Time</h6>
+                    <p class="text-muted mb-0">15-25 minutes from order confirmation</p>
+                </div>
+                
+                {% if order.order_type == 'dine_in' %}
+                    <div class="mb-3">
+                        <h6><i class="fas fa-utensils me-2"></i>Dine In</h6>
+                        <ul class="list-unstyled text-muted small">
+                            <li>• Your order will be served at table {{ order.table_number }}</li>
+                            <li>• Please wait at your table</li>
+                            <li>• Payment at the counter when ready</li>
+                        </ul>
+                    </div>
+                {% else %}
+                    <div class="mb-3">
+                        <h6><i class="fas fa-shopping-bag me-2"></i>Takeaway</h6>
+                        <ul class="list-unstyled text-muted small">
+                            <li>• Pick up at the counter</li>
+                            <li>• Bring your order number: <strong>{{ order.order_number }}</strong></li>
+                            <li>• Payment at pickup</li>
+                        </ul>
+                    </div>
+                {% endif %}
+                
+                <div class="alert alert-success">
+                    <i class="fas fa-check-circle me-2"></i>
+                    <strong>Order Confirmed!</strong> Your order has been received and is being processed.
+                </div>
+            </div>
+        </div>
+        
+        <div class="card mt-3">
+            <div class="card-header bg-warning text-dark">
+                <h5 class="mb-0">
+                    <i class="fas fa-phone me-2"></i>
+                    Need Help?
+                </h5>
+            </div>
+            <div class="card-body">
+                <p class="mb-2">If you have any questions about your order:</p>
+                <p class="mb-1">
+                    <i class="fas fa-phone me-2"></i>
+                    <strong>Call us:</strong> (555) 123-4567
+                </p>
+                <p class="mb-0">
+                    <i class="fas fa-envelope me-2"></i>
+                    <strong>Email:</strong> orders@restaurant.com
+                </p>
+                <p class="mb-0">
+                    <strong>Reference:</strong> Order #{{ order.order_number }}
+                </p>
+            </div>
+        </div>
+        
+        <div class="card mt-3">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-arrow-left me-2"></i>
+                    Back to Menu
+                </h5>
+            </div>
+            <div class="card-body">
+                <a href="{% url 'customer_interface:menu' %}" class="btn btn-success w-100">
+                    <i class="fas fa-utensils me-2"></i>
+                    Order More Food
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .status-step {
+        padding: 15px 10px;
+        border-radius: 10px;
+        transition: all 0.3s ease;
+    }
+    
+    .status-step.active {
+        background-color: var(--primary-color);
+        color: white;
+    }
+    
+    .status-step:not(.active) {
+        background-color: #f8f9fa;
+        color: #6c757d;
+    }
+    
+    .status-step i {
+        transition: all 0.3s ease;
+    }
+    
+    .status-step.active i {
+        color: white;
+    }
+    
+    .status-step:not(.active) i {
+        color: #6c757d;
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Real-time order status updates
+    function updateOrderStatus() {
+        fetch('{% url "customer_interface:order_status_api" order.order_number %}')
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('current-status').textContent = data.status_display;
+                document.getElementById('last-updated').textContent = new Date(data.updated_at).toLocaleTimeString();
+                
+                // Update progress bar and status steps based on new status
+                const statusProgress = {
+                    'pending': 0,
+                    'confirmed': 25,
+                    'preparing': 50,
+                    'ready': 75,
+                    'completed': 100,
+                    'cancelled': 0
+                };
+                
+                const progress = statusProgress[data.status] || 0;
+                const progressBar = document.querySelector('.progress-bar');
+                progressBar.style.width = progress + '%';
+                progressBar.setAttribute('aria-valuenow', progress);
+                progressBar.textContent = progress + '%';
+                
+                // Update status steps
+                updateStatusSteps(data.status);
+            })
+            .catch(error => {
+                console.error('Error updating order status:', error);
+            });
+    }
+    
+    function updateStatusSteps(status) {
+        const steps = document.querySelectorAll('.status-step');
+        const statusOrder = ['pending', 'confirmed', 'preparing', 'ready', 'completed'];
+        const currentIndex = statusOrder.indexOf(status);
+        
+        steps.forEach((step, index) => {
+            if (index <= currentIndex) {
+                step.classList.add('active');
+            } else {
+                step.classList.remove('active');
+            }
+        });
+    }
+    
+    // Update status every 30 seconds
+    setInterval(updateOrderStatus, 30000);
+    
+    // Initial update
+    updateOrderStatus();
+</script>
+{% endblock %} 
